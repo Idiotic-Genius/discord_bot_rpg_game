@@ -1,0 +1,14 @@
+Unified stats class for everything
+
+Items class
+
+Equipment class
+
+Loot table
+
+Combat system (rework with skills and classes in mind)
+
+Quest system (quest journal)
+
+Classes and skills
+

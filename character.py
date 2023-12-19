@@ -1,50 +1,21 @@
-import enum
 import random
 import sys
-
 from copy import deepcopy
 
 from replit import db
 
-
-# Helper functions
-def str_to_class(classname):
-    return getattr(sys.modules[__name__], classname)
-
-
-# Game modes
-class GameMode(enum.IntEnum):
-    ADVENTURE = 1
-    BATTLE = 2
+from actor import Actor
+from constants import GameMode
+import enemy
+from enemy import Enemy
 
 
-# Living creatures
-class Actor:
-
-    def __init__(self, name, hp, max_hp, attack, defense, xp, gold):
-        self.name = name
-        self.hp = hp
-        self.max_hp = max_hp
-        self.attack = attack
-        self.defense = defense
-        self.xp = xp
-        self.gold = gold
-
-    def fight(self, other):
-        defense = min(other.defense, 19)  # cap defense value
-        chance_to_hit = random.randint(0, 20 - defense)
-        if chance_to_hit:
-            damage = self.attack
-        else:
-            damage = 0
-
-        other.hp -= damage
-
-        return (self.attack, other.hp <= 0)  #(damage, fatal)
+# Utility Functions
+def str_to_class(module, classname):
+    return getattr(sys.modules[module], classname)
 
 
 class Character(Actor):
-
     level_cap = 10
 
     def __init__(self, name, hp, max_hp, attack, defense, mana, level, xp,
@@ -53,13 +24,17 @@ class Character(Actor):
         self.mana = mana
         self.level = level
 
+        # TODO: Equipment system
+        self.equipment = Equipment()
+        
         self.inventory = inventory
 
         self.mode = mode
         if battling is not None:
-            enemy_class = str_to_class(battling["enemy"])
+            enemy_class = str_to_class(module='enemy',
+                                       classname=battling["enemy"])
             self.battling = enemy_class()
-            self.battling.rehydrate(**battling)
+            self.battling.update(**battling)
         else:
             self.battling = None
         self.user_id = user_id
@@ -115,10 +90,13 @@ class Character(Actor):
         return (damage, self.hp <= 0)  #(damage, killed)
 
     def defeat(self, enemy):
-        if self.level < self.level_cap:  # no more XP after hitting level cap
+        # no more XP after hitting level cap
+        if self.level < self.level_cap:
             self.xp += enemy.xp
 
-        self.gold += enemy.gold  # loot enemy
+        # loot enemy
+        # TODO: make a loot table and item system
+        self.gold += enemy.gold
 
         # Exit battle mode
         self.battling = None
@@ -162,92 +140,3 @@ class Character(Actor):
             del db["characters"][str(self.user_id)]
         except KeyError:
             print(f"Character with ID {self.user_id} not found in DB")
-
-
-class Enemy(Actor):
-
-    def __init__(self, name, max_hp, attack, defense, xp, gold):
-        super().__init__(name, max_hp, max_hp, attack, defense, xp, gold)
-        self.enemy = self.__class__.__name__
-
-    # NEW METHOD
-    def rehydrate(self, name, hp, max_hp, attack, defense, xp, gold, enemy):
-        self.name = name
-        self.hp = hp
-        self.max_hp = max_hp
-        self.attack = attack
-        self.defense = defense
-        self.xp = xp
-        self.gold = gold
-
-
-class GiantRat(Enemy):
-    min_level = 1
-
-    def __init__(self):
-        super().__init__("🐀 Giant Rat", 2, 1, 1, 1,
-                         1)  # HP, attack, defense, XP, gold
-
-
-class GiantSpider(Enemy):
-    min_level = 1
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🕷️ Giant Spider", 3, 2, 1, 1, 2)
-
-
-class Bat(Enemy):
-    min_level = 1
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🦇 Bat", 4, 2, 1, 2, 1)
-
-
-class Crocodile(Enemy):
-    min_level = 2
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🐊 Crocodile", 5, 3, 1, 2, 2)
-
-
-class Wolf(Enemy):
-    min_level = 2
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🐺 Wolf", 6, 3, 2, 2, 2)
-
-
-class Poodle(Enemy):
-    min_level = 3
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🐩 Poodle", 7, 4, 1, 3, 3)
-
-
-class Snake(Enemy):
-    min_level = 3
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🐍 Snake", 8, 4, 2, 3, 3)
-
-
-class Lion(Enemy):
-    min_level = 4
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🦁 Lion", 9, 5, 1, 4, 4)
-
-
-class Dragon(Enemy):
-    min_level = 5
-
-    def __init__(self):
-        # HP, attack, defense, XP, gold
-        super().__init__("🐉 Dragon", 10, 6, 2, 5, 5)

@@ -4,62 +4,65 @@ from discord.ext import commands
 
 from replit import db
 
-import game
+from constants import COMMAND_PREFIX, GameMode
+from character import Character
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-COMMAND_PREFIX = "?"
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
 # Helper functions
 def load_character(user_id):
-    return game.Character(**db["characters"][str(user_id)])
+    return Character(**db["characters"][str(user_id)])
 
 
 MODE_COLOR = {
-    game.GameMode.BATTLE: 0xDC143C,
-    game.GameMode.ADVENTURE: 0x005EB8,
+    GameMode.BATTLE: 0xDC143C,
+    GameMode.ADVENTURE: 0x005EB8,
 }
 
 
-def status_embed(ctx, character):
-
-    # Current mode
-    if character.mode == game.GameMode.BATTLE:
-        mode_text = f"Currently battling a {character.battling.name}."
-    elif character.mode == game.GameMode.ADVENTURE:
-        mode_text = "Currently adventuring."
-    else:
-        mode_text = "Invalid mode."
-
+def status_embed(ctx, actor):
     # Create embed with description as current mode
-    embed = discord.Embed(title=f"{character.name} status",
-                          description=mode_text,
-                          color=MODE_COLOR[character.mode])
+    embed = discord.Embed(title=f"{actor.name} status",
+                          description='',
+                          color=0xDC143C)
     embed.set_author(name=ctx.author.display_name,
                      icon_url=ctx.author.avatar_url)
 
     # Stats field
-    _, xp_needed = character.ready_to_level_up()
+    parent_class_name = actor.__class__.__bases__[0].__name__
+    if parent_class_name == "Enemy":
+        embed.add_field(name="Stats",
+                        value=f"""
+        **HP:**         {actor.hp}/{actor.max_hp}
+        **ATTACK:**     {actor.attack}
+        **DEFENSE:**    {actor.defense}
+        **MANA:**       {actor.mana}
+        **LEVEL:**      {actor.level}
+        """,
+                        inline=True)
+    else:
+        _, xp_needed = actor.ready_to_level_up()
 
-    embed.add_field(name="Stats",
-                    value=f"""
-**HP:**    {character.hp}/{character.max_hp}
-**ATTACK:**   {character.attack}
-**DEFENSE:**   {character.defense}
-**MANA:**  {character.mana}
-**LEVEL:** {character.level}
-**XP:**    {character.xp}/{character.xp+xp_needed}
-    """,
-                    inline=True)
+        embed.add_field(name="Stats",
+                        value=f"""
+        **HP:**         {actor.hp}/{actor.max_hp}
+        **ATTACK:**     {actor.attack}
+        **DEFENSE:**    {actor.defense}
+        **MANA:**       {actor.mana}
+        **LEVEL:**      {actor.level}
+        **XP:**         {actor.xp}/{actor.xp+xp_needed}
+        """,
+                        inline=True)
 
-    # Inventory field
-    inventory_text = f"Gold: {character.gold}\n"
-    if character.inventory:
-        inventory_text += "\n".join(character.inventory)
+        # Inventory field
+        inventory_text = f"Gold: {actor.gold}\n"
+        if actor.inventory:
+            inventory_text += "\n".join(actor.inventory)
 
-    embed.add_field(name="Inventory", value=inventory_text, inline=True)
+        embed.add_field(name="Inventory", value=inventory_text, inline=True)
 
     return embed
 
@@ -84,7 +87,7 @@ async def create(ctx, name=None):
 
     # only create a new character if the user does not already have one
     if user_id not in db["characters"] or not db["characters"][user_id]:
-        character = game.Character(
+        character = Character(
             **{
                 "name": name,
                 "hp": 16,
@@ -96,7 +99,7 @@ async def create(ctx, name=None):
                 "xp": 0,
                 "gold": 0,
                 "inventory": [],
-                "mode": game.GameMode.ADVENTURE,
+                "mode": GameMode.ADVENTURE,
                 "battling": None,
                 "user_id": user_id
             })
@@ -122,12 +125,14 @@ async def status(ctx):
 async def hunt(ctx):
     character = load_character(ctx.message.author.id)
 
-    if character.mode != game.GameMode.ADVENTURE:
+    if character.mode != GameMode.ADVENTURE:
         await ctx.message.reply("Can only call this command outside of battle!"
                                 )
         return
 
     enemy = character.hunt()
+    embed = status_embed(ctx, enemy)
+    await ctx.message.reply(embed=embed)
 
     # Send reply
     await ctx.message.reply(
@@ -139,7 +144,7 @@ async def hunt(ctx):
 async def fight(ctx):
     character = load_character(ctx.message.author.id)
 
-    if character.mode != game.GameMode.BATTLE:
+    if character.mode != GameMode.BATTLE:
         await ctx.message.reply("Can only call this command in battle!")
         return
 
@@ -147,13 +152,9 @@ async def fight(ctx):
     enemy = character.battling
 
     # Character attacks
-    damage, killed = character.fight(enemy)
-    if damage:
-        await ctx.message.reply(
-            f"{character.name} attacks {enemy.name}, dealing {damage} damage!")
-    else:
-        await ctx.message.reply(
-            f"{character.name} swings at {enemy.name}, but misses!")
+    attack_roll, defense_roll, damage, killed, combat_message = character.fight(
+        enemy)
+    await ctx.message.reply(combat_message)
 
     # End battle in victory if enemy killed
     if killed:
@@ -165,21 +166,18 @@ async def fight(ctx):
 
         if ready_to_level_up:
             await ctx.message.reply(
-                f"{character.name} has earned enough XP to advance to level {character.level+1}. Enter `!levelup` with the stat (HP, ATTACK, DEFENSE) you would like to increase. e.g. `{COMMAND_PREFIX}levelup hp` or `!levelup attack`."
+                f"{character.name} has earned enough XP to advance to level {character.level+1}. Enter `{COMMAND_PREFIX}levelup` with the stat (HP, ATTACK, DEFENSE) you would like to increase. e.g. `{COMMAND_PREFIX}levelup hp` or `{COMMAND_PREFIX}levelup attack`."
             )
 
         return
 
     # Enemy attacks
-    damage, killed = enemy.fight(character)
-    if damage:
-        await ctx.message.reply(
-            f"{enemy.name} attacks {character.name}, dealing {damage} damage!")
-    else:
-        await ctx.message.reply(
-            f"{enemy.name} tries to attack {character.name}, but misses!")
+    attack_roll, defense_roll, damage, killed, combat_message = enemy.fight(
+        character)
+    await ctx.message.reply(combat_message)
 
-    character.save_to_db()  #enemy.fight() does not save automatically
+    # enemy.fight() does not automatically save character's state
+    character.save_to_db()
 
     # End battle in death if character killed
     if killed:
@@ -200,7 +198,7 @@ async def fight(ctx):
 async def flee(ctx):
     character = load_character(ctx.message.author.id)
 
-    if character.mode != game.GameMode.BATTLE:
+    if character.mode != GameMode.BATTLE:
         await ctx.message.reply("Can only call this command in battle!")
         return
 
@@ -264,8 +262,8 @@ async def levelup(ctx, increase):
         await ctx.message.reply(f"{character.name} failed to level up.")
 
 
-@bot.command(name="die", help="Destroy current character.")
-async def die(ctx):
+@bot.command(name="delete", help="Destroy current character.")
+async def delete(ctx):
     character = load_character(ctx.message.author.id)
 
     character.delete()
