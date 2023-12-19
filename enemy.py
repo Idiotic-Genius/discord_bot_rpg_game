@@ -2,9 +2,11 @@ import random
 
 from actor import Actor
 import constants
+from stats import ActorStats
 
 
 # Utility Functions
+# FIXME: Attributes changed to stats
 def generate_enemy_attributes(name, min_level, max_level):
     level = random.randrange(min_level, max_level)
     max_hp = random.randrange(constants.ENEMY_HP_MOD[0] * level,
@@ -34,29 +36,16 @@ def generate_enemy_attributes(name, min_level, max_level):
 
 class Enemy(Actor):
 
-    def __init__(self, name, max_hp, attack, defense, mana, level, xp, gold):
-        super().__init__(name=name,
-                         hp=max_hp,
-                         max_hp=max_hp,
-                         attack=attack,
-                         defense=defense,
-                         xp=xp,
-                         gold=gold)
-        self.enemy = self.__class__.__name__
-        self.mana = mana
-        self.level = level
+    def __init__(self, name, str, agi, int, hp, defense, max_hp, level, exp,
+                 inventory):
+        stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
+                           0)  # Enemies cannot level
+        super().__init__(name, stats, inventory)
 
-    def update(self, name, hp, max_hp, attack, defense, mana, level, xp, gold,
-               enemy):
+    def update(self, name, stats, inventory):
         self.name = name
-        self.hp = hp
-        self.max_hp = max_hp
-        self.attack = attack
-        self.defense = defense
-        self.mana = mana
-        self.level = level
-        self.xp = xp
-        self.gold = gold
+        self.stats = stats
+        self.inventory = inventory
 
 
 class GiantRat(Enemy):

@@ -3,16 +3,13 @@ import random
 
 class Actor:
 
-    def __init__(self, name, hp, max_hp, attack, defense, xp, gold):
+    def __init__(self, name, stats, inventory):
         self.name = name
-        self.hp = hp
-        self.max_hp = max_hp
-        self.attack = attack
-        self.defense = defense
-        self.xp = xp
-        self.gold = gold
+        self.stats = stats
+        # TODO: inventory will contain the items and gold (list of items)
+        self.inventory = inventory
 
-    # TODO: Implement roll 20 as critial hit
+    # TODO: Implement roll 20 as critial hit, fix due to new stats
     def fight(self, other):
         attack_roll = random.randint(min(self.attack, 19), 20)
         defense_roll = random.randint(min(other.defense, 19), 20)
@@ -33,6 +30,7 @@ class Actor:
         return (attack_roll, defense_roll, damage, other.hp <= 0,
                 combat_message)
 
+    # FIXME
     def combat_text(self, enemy, attack_roll, defense_roll, damage, killed):
         text = f"{self.name} rolls {attack_roll} to attack. \n {enemy.name} rolls {defense_roll} to defend."
         if damage > 0:

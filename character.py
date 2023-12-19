@@ -5,9 +5,11 @@ from copy import deepcopy
 from replit import db
 
 from actor import Actor
+import constants
 from constants import GameMode
 import enemy
 from enemy import Enemy
+from stats import ActorStats
 
 
 # Utility Functions
@@ -16,17 +18,17 @@ def str_to_class(module, classname):
 
 
 class Character(Actor):
-    level_cap = 10
 
-    def __init__(self, name, hp, max_hp, attack, defense, mana, level, xp,
-                 gold, inventory, mode, battling, user_id):
-        super().__init__(name, hp, max_hp, attack, defense, xp, gold)
-        self.mana = mana
-        self.level = level
+    def __init__(self, name, str, agi, int, hp, defense, max_hp, level, exp,
+                 inventory, mode, battling, user_id):
+        exp_to_level = level * 10
+        stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
+                           exp_to_level)
+        super().__init__(name, stats, inventory)
 
         # TODO: Equipment system
-        self.equipment = Equipment()
-        
+        # Use equipped attribute on items
+
         self.inventory = inventory
 
         self.mode = mode
@@ -91,7 +93,7 @@ class Character(Actor):
 
     def defeat(self, enemy):
         # no more XP after hitting level cap
-        if self.level < self.level_cap:
+        if self.level < constants.PLAYER_LVL_CAP:
             self.xp += enemy.xp
 
         # loot enemy
@@ -112,7 +114,7 @@ class Character(Actor):
 
     def ready_to_level_up(self):
         # zero values if we've ready the level cap
-        if self.level == self.level_cap:
+        if self.level == constants.PLAYER_LVL_CAP:
             return (False, 0)
 
         xp_needed = (self.level) * 10

@@ -1,6 +1,7 @@
-Unified stats class for everything
+Unified stats class for everything*
+Fix actor, character, and enemy classes
 
-Items class
+Items class (introduce rarities later)
 
 Equipment class
 
@@ -10,5 +11,5 @@ Combat system (rework with skills and classes in mind)
 
 Quest system (quest journal)
 
-Classes and skills
+Classes and skills (mana system)
 
