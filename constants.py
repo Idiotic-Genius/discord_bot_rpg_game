@@ -18,3 +18,4 @@ PLAYER_LVL_CAP = 10
 class GameMode(enum.IntEnum):
     ADVENTURE = 1
     BATTLE = 2
+

@@ -10,13 +10,23 @@ class Actor:
         self.inventory = inventory
 
     # TODO: Implement roll 20 as critial hit, fix due to new stats
-    def fight(self, other):
-        attack_roll = random.randint(min(self.attack, 19), 20)
+    def roll_to_hit(self, hit_mod, other):
+        attack_roll = random.randint(min(hit_mod, 19), 20)
         defense_roll = random.randint(min(other.defense, 19), 20)
-        if attack_roll > defense_roll:
-            damage = self.attack
+        return (attack_roll, defense_roll)
+
+    def combat_text(self, enemy, attack_roll, defense_roll, damage, killed):
+        text = f"{self.name} rolls {attack_roll} to attack. \n {enemy.name} rolls {defense_roll} to defend."
+        if damage > 0:
+            text += f"\n {self.name} attacks {enemy.name}, dealing {damage} damage!"
         else:
-            damage = 0
+            text += f"\n {self.name} swings at {enemy.name}, but misses!"
+
+        return text
+
+    def fight(self, rolls, damage, other):
+        attack_roll = rolls[0]
+        defense_roll = rolls[1]
 
         other.hp -= damage
 
@@ -30,14 +40,11 @@ class Actor:
         return (attack_roll, defense_roll, damage, other.hp <= 0,
                 combat_message)
 
-    # FIXME
-    def combat_text(self, enemy, attack_roll, defense_roll, damage, killed):
-        text = f"{self.name} rolls {attack_roll} to attack. \n {enemy.name} rolls {defense_roll} to defend."
-        if damage > 0:
-            text += "\n {self.name} attacks {enemy.name}, dealing {damage} damage!"
-        else:
-            text += "\n {self.name} swings at {enemy.name}, but misses!"
+    def melee_attack(self, other):
+        # TODO: Add weapon damage if one exist
+        damage = self.stats.str
+        hit_mod = self.stats.str
+        rolls = self.roll_to_hit(hit_mod, other)
+        return self.fight(rolls, damage, other)
 
-        return text
-
-    # TODO: message for killing and loot allocations
+    # TODO: Implement ranged, magic, and other attacks

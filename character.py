@@ -7,7 +7,7 @@ from replit import db
 from actor import Actor
 import constants
 from constants import GameMode
-import enemy
+# import enemy
 from enemy import Enemy
 from stats import ActorStats
 
@@ -67,8 +67,8 @@ class Character(Actor):
 
         return enemy
 
-    def fight(self, enemy):
-        outcome = super().fight(enemy)
+    def melee_attack(self, enemy):
+        outcome = super().melee_attack(enemy)
 
         # Save changes to DB after state change
         self.save_to_db()

@@ -6,10 +6,14 @@ class Item():
         self.stats = stats
         self.weight = weight
         self.value = value
+        # self.broken = False    # TODO: add broken item status
         self.equipped = False
 
+    def reduce_durabiltity(self, amount):
+        self.stats.durability -= amount
+
     def repair(self):
-        self.durability = self.max_durability
+        self.stats.durability = self.stats.max_durability
 
     def equip(self):
         self.equipped = True

@@ -12,15 +12,9 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
-# Helper functions
+# Utility Functions
 def load_character(user_id):
     return Character(**db["characters"][str(user_id)])
-
-
-MODE_COLOR = {
-    GameMode.BATTLE: 0xDC143C,
-    GameMode.ADVENTURE: 0x005EB8,
-}
 
 
 def status_embed(ctx, actor):
@@ -140,8 +134,8 @@ async def hunt(ctx):
     )
 
 
-@bot.command(name="fight", help="Fight the current enemy.")
-async def fight(ctx):
+@bot.command(name="melee", help="Attack the current enemy with melee.")
+async def melee(ctx):
     character = load_character(ctx.message.author.id)
 
     if character.mode != GameMode.BATTLE:
@@ -152,7 +146,7 @@ async def fight(ctx):
     enemy = character.battling
 
     # Character attacks
-    attack_roll, defense_roll, damage, killed, combat_message = character.fight(
+    attack_roll, defense_roll, damage, killed, combat_message = character.melee_attack(
         enemy)
     await ctx.message.reply(combat_message)
 
@@ -172,11 +166,12 @@ async def fight(ctx):
         return
 
     # Enemy attacks
-    attack_roll, defense_roll, damage, killed, combat_message = enemy.fight(
+    # TODO: Update for variety of attacks
+    attack_roll, defense_roll, damage, killed, combat_message = enemy.melee_attack(
         character)
     await ctx.message.reply(combat_message)
 
-    # enemy.fight() does not automatically save character's state
+    # FIXEME: enemy.fight() does not automatically save character's state
     character.save_to_db()
 
     # End battle in death if character killed
