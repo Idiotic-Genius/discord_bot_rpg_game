@@ -1,5 +1,4 @@
-Unified stats class for everything*
-Fix actor, character, and enemy classes
+Fix Commands to work with new stats system
 
 Items class (introduce rarities later)
 

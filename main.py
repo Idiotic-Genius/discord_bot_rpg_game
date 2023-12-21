@@ -19,6 +19,7 @@ def load_character(user_id):
 
 def status_embed(ctx, actor):
     # Create embed with description as current mode
+    # TODO: Add proper color scheme
     embed = discord.Embed(title=f"{actor.name} status",
                           description='',
                           color=0xDC143C)
@@ -27,35 +28,24 @@ def status_embed(ctx, actor):
 
     # Stats field
     parent_class_name = actor.__class__.__bases__[0].__name__
-    if parent_class_name == "Enemy":
-        embed.add_field(name="Stats",
-                        value=f"""
-        **HP:**         {actor.hp}/{actor.max_hp}
-        **ATTACK:**     {actor.attack}
-        **DEFENSE:**    {actor.defense}
-        **MANA:**       {actor.mana}
-        **LEVEL:**      {actor.level}
-        """,
-                        inline=True)
-    else:
-        _, xp_needed = actor.ready_to_level_up()
+    text = f"""
+    **LEVEL:**     {actor.stats.level}
+    **HP:**         {actor.stats.hp}/{actor.stats.max_hp}
+    **STR:**     {actor.stats.str}
+    **AGI:**    {actor.stats.agi}
+    **INT:**      {actor.stats.int}
+    **DEFENSE:**      {actor.stats.defense}
+    """
+    if parent_class_name != "Enemy":
+        _, exp_needed = actor.ready_to_level_up()
+        text += f"**EXP:**         {actor.stats.exp}/{actor.stats.exp+exp_needed}"
+    embed.add_field(name="Stats", value=text, inline=True)
 
-        embed.add_field(name="Stats",
-                        value=f"""
-        **HP:**         {actor.hp}/{actor.max_hp}
-        **ATTACK:**     {actor.attack}
-        **DEFENSE:**    {actor.defense}
-        **MANA:**       {actor.mana}
-        **LEVEL:**      {actor.level}
-        **XP:**         {actor.xp}/{actor.xp+xp_needed}
-        """,
-                        inline=True)
-
-        # Inventory field
-        inventory_text = f"Gold: {actor.gold}\n"
-        if actor.inventory:
-            inventory_text += "\n".join(actor.inventory)
-
+    # Inventory field
+    # inventory_text = f"Gold: {actor.gold}\n"
+    if actor.inventory:
+        inventory_text = ""
+        inventory_text += "\n".join(actor.inventory)
         embed.add_field(name="Inventory", value=inventory_text, inline=True)
 
     return embed
@@ -84,14 +74,14 @@ async def create(ctx, name=None):
         character = Character(
             **{
                 "name": name,
-                "hp": 16,
-                "max_hp": 16,
-                "attack": 2,
-                "defense": 1,
-                "mana": 0,
+                "str": 5,
+                "agi": 5,
+                "int": 5,
+                "hp": 10,
+                "defense": 5,
+                "max_hp": 10,
                 "level": 1,
-                "xp": 0,
-                "gold": 0,
+                "exp": 0,
                 "inventory": [],
                 "mode": GameMode.ADVENTURE,
                 "battling": None,
@@ -162,8 +152,6 @@ async def melee(ctx):
             await ctx.message.reply(
                 f"{character.name} has earned enough XP to advance to level {character.level+1}. Enter `{COMMAND_PREFIX}levelup` with the stat (HP, ATTACK, DEFENSE) you would like to increase. e.g. `{COMMAND_PREFIX}levelup hp` or `{COMMAND_PREFIX}levelup attack`."
             )
-
-        return
 
     # Enemy attacks
     # TODO: Update for variety of attacks
@@ -259,6 +247,7 @@ async def levelup(ctx, increase):
 
 @bot.command(name="delete", help="Destroy current character.")
 async def delete(ctx):
+    # del db["characters"][str(ctx.message.author.id)]    # Used to dev-test
     character = load_character(ctx.message.author.id)
 
     character.delete()
@@ -266,6 +255,11 @@ async def delete(ctx):
     await ctx.message.reply(
         f"Character {character.name} is no more. Create a new one with `!create`."
     )
+
+
+@bot.command(name="deldev", help="Destroy current character. -Dev only.")
+async def delete_dev(ctx):
+    del db["characters"][str(ctx.message.author.id)]
 
 
 bot.run(DISCORD_TOKEN)

@@ -19,16 +19,33 @@ def str_to_class(module, classname):
 
 class Character(Actor):
 
-    def __init__(self, name, str, agi, int, hp, defense, max_hp, level, exp,
-                 inventory, mode, battling, user_id):
-        exp_to_level = level * 10
-        stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
-                           exp_to_level)
+    def __init__(self,
+                 name,
+                 stats=None,
+                 str=None,
+                 agi=None,
+                 int=None,
+                 hp=None,
+                 defense=None,
+                 max_hp=None,
+                 level=None,
+                 exp=None,
+                 inventory=None,
+                 mode=None,
+                 battling=None,
+                 user_id=None):
+        if stats is not None:
+            # If 'stats' is provided, use it directly
+            stats = ActorStats(**stats)
+        else:
+            exp_to_level = level * 10
+            stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
+                               exp_to_level)
+            print(stats.__dict__)
         super().__init__(name, stats, inventory)
 
         # TODO: Equipment system
         # Use equipped attribute on items
-
         self.inventory = inventory
 
         self.mode = mode
@@ -43,8 +60,11 @@ class Character(Actor):
 
     def save_to_db(self):
         character_dict = deepcopy(vars(self))
+        character_dict["stats"] = self.stats.to_dict()
         if self.battling is not None:
             character_dict["battling"] = deepcopy(vars(self.battling))
+
+        print("***", character_dict)
 
         db["characters"][self.user_id] = character_dict
 
@@ -114,28 +134,28 @@ class Character(Actor):
 
     def ready_to_level_up(self):
         # zero values if we've ready the level cap
-        if self.level == constants.PLAYER_LVL_CAP:
+        if self.stats.level == constants.PLAYER_LVL_CAP:
             return (False, 0)
 
-        xp_needed = (self.level) * 10
-        return (self.xp >= xp_needed, xp_needed - self.xp
+        xp_needed = (self.stats.level) * 10
+        return (self.stats.exp >= xp_needed, xp_needed - self.stats.exp
                 )  # (ready, XP needed)
 
     def level_up(self, increase):
         ready, _ = self.ready_to_level_up()
         if not ready:
-            return (False, self.level)  # (not leveled up, current level)
+            return (False, self.stats.level)  # (not leveled up, current level)
 
-        self.level += 1  # increase level
+        self.stats.level += 1  # increase level
         setattr(self, increase,
                 getattr(self, increase) + 1)  # increase chosen stat
 
-        self.hp = self.max_hp  # refill HP
+        self.stats.hp = self.stats.max_hp  # refill HP
 
         # Save to DB after state change
         self.save_to_db()
 
-        return (True, self.level)  # (leveled up, new level)
+        return (True, self.stats.level)  # (leveled up, new level)
 
     def delete(self):
         try:

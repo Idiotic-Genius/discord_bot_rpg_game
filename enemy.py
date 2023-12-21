@@ -6,41 +6,57 @@ from stats import ActorStats
 
 
 # Utility Functions
-# FIXME: Attributes changed to stats
 def generate_enemy_attributes(name, min_level, max_level):
     level = random.randrange(min_level, max_level)
-    max_hp = random.randrange(constants.ENEMY_HP_MOD[0] * level,
-                              constants.ENEMY_HP_MOD[1] * level)
-    attack = random.randrange(constants.ENEMY_ATTACK_MOD[0] * level,
-                              constants.ENEMY_ATTACK_MOD[1] * level)
+    str = random.randrange(constants.ENEMY_STR_MOD[0] * level,
+                           constants.ENEMY_STR_MOD[1] * level)
+    agi = random.randrange(constants.ENEMY_AGI_MOD[0] * level,
+                           constants.ENEMY_AGI_MOD[1] * level)
+    int = random.randrange(constants.ENEMY_INT_MOD[0] * level,
+                           constants.ENEMY_INT_MOD[1] * level)
+    max_hp = random.randrange(constants.ENEMY_MAXHP_MOD[0] * level,
+                              constants.ENEMY_MAXHP_MOD[1] * level)
     defense = random.randrange(constants.ENEMY_DEFENSE_MOD[0] * level,
                                constants.ENEMY_DEFENSE_MOD[1] * level)
-    mana = 0
-    xp = random.randrange(constants.ENEMY_XP_MOD[0] * level,
-                          constants.ENEMY_XP_MOD[1] * level)
+    exp = random.randrange(constants.ENEMY_XP_MOD[0] * level,
+                           constants.ENEMY_XP_MOD[1] * level)
     gold = random.randrange(constants.ENEMY_GOLD_MOD[0] * level,
                             constants.ENEMY_GOLD_MOD[1] * level)
 
     return {
         "name": name,
-        "level": level,
-        "max_hp": max_hp,
-        "attack": attack,
+        "str": str,
+        "agi": agi,
+        "int": int,
+        "hp": max_hp,
         "defense": defense,
-        "mana": mana,
+        "max_hp": max_hp,
         "level": level,
-        "xp": xp,
+        "exp": exp,
         "gold": gold
     }
 
 
 class Enemy(Actor):
 
-    def __init__(self, name, str, agi, int, hp, defense, max_hp, level, exp,
-                 inventory):
-        stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
-                           0)  # Enemies cannot level
-        super().__init__(name, stats, inventory)
+    def __init__(self,
+                 name,
+                 stats=None,
+                 str=None,
+                 agi=None,
+                 int=None,
+                 hp=None,
+                 defense=None,
+                 max_hp=None,
+                 level=None,
+                 exp=None,
+                 inventory=None):
+        if stats is not None:
+            self.stats = stats
+        else:
+            stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
+                               0)  # Enemies cannot level
+            super().__init__(name, stats, inventory)
 
     def update(self, name, stats, inventory):
         self.name = name
