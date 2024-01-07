@@ -5,7 +5,11 @@ from discord.ext import commands
 from replit import db
 
 from constants import COMMAND_PREFIX, GameMode
-from character import Character
+from character import Character, str_to_class
+from stats import ActorStats
+import enemy
+
+import re
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -13,8 +17,60 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
 # Utility Functions
+def clean_string(input_string):
+    # Remove emojis using regex
+    emoji_pattern = re.compile(
+        "["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F700-\U0001F77F"  # alchemical symbols
+        u"\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+        u"\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+        u"\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+        u"\U0001FA00-\U0001FA6F"  # Chess Symbols
+        u"\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+        u"\U00002702-\U000027B0"  # Dingbats
+        u"\U000024C2-\U0001F251"
+        "]+",
+        flags=re.UNICODE)
+    input_string = emoji_pattern.sub('', input_string)
+
+    # Remove spaces and return the result
+    return ''.join(input_string.split())
+
+
+def create_actor_stats(stats_data):
+    # stats_keys = [
+    #     "str", "agi", "int", "hp", "defense", "max_hp", "level", "exp",
+    #     "exp_to_level"
+    # ]
+    # return ActorStats(**{key: stats_data[key] for key in stats_keys})
+    return ActorStats(**stats_data)
+
+
+def create_enemy(battling_data):
+    enemy_class = str_to_class(module='enemy',
+                               classname=clean_string(battling_data["name"]))
+    return enemy_class(name=battling_data["name"],
+                       min_level=battling_data["min_level"],
+                       max_level=battling_data["max_level"],
+                       stats=create_actor_stats(battling_data["stats"]),
+                       inventory=battling_data["inventory"])
+
+
 def load_character(user_id):
-    return Character(**db["characters"][str(user_id)])
+    if "characters" in db.keys() and str(user_id) in db["characters"]:
+        character_data = db["characters"][str(user_id)]
+
+        return Character(name=character_data["name"],
+                         stats=create_actor_stats(character_data["stats"]),
+                         mode=GameMode(character_data["mode"]),
+                         battling=create_enemy(character_data["battling"])
+                         if character_data["battling"] else None,
+                         user_id=user_id)
+    else:
+        return None
 
 
 def status_embed(ctx, actor):

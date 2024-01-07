@@ -7,7 +7,7 @@ from replit import db
 from actor import Actor
 import constants
 from constants import GameMode
-# import enemy
+import enemy
 from enemy import Enemy
 from stats import ActorStats
 
@@ -34,14 +34,10 @@ class Character(Actor):
                  mode=None,
                  battling=None,
                  user_id=None):
-        if stats is not None:
-            # If 'stats' is provided, use it directly
-            stats = ActorStats(**stats)
-        else:
+        if stats is None:
             exp_to_level = level * 10
             stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
                                exp_to_level)
-            print(stats.__dict__)
         super().__init__(name, stats, inventory)
 
         # TODO: Equipment system
@@ -62,9 +58,9 @@ class Character(Actor):
         character_dict = deepcopy(vars(self))
         character_dict["stats"] = self.stats.to_dict()
         if self.battling is not None:
+            print("***", self.battling.stats.to_dict())
+            self.battling.stats = self.battling.stats.to_dict()
             character_dict["battling"] = deepcopy(vars(self.battling))
-
-        print("***", character_dict)
 
         db["characters"][self.user_id] = character_dict
 
@@ -73,7 +69,7 @@ class Character(Actor):
         while True:
             enemy_type = random.choice(Enemy.__subclasses__())
 
-            if enemy_type.min_level <= self.level:
+            if enemy_type.min_level <= self.stats.level:
                 break
 
         enemy = enemy_type()
@@ -81,6 +77,9 @@ class Character(Actor):
         # Enter battle mode
         self.mode = GameMode.BATTLE
         self.battling = enemy
+
+        print(self.battling)
+        print(self.battling.__dict__)
 
         # Save changes to DB after state change
         self.save_to_db()

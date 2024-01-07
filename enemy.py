@@ -6,7 +6,7 @@ from stats import ActorStats
 
 
 # Utility Functions
-def generate_enemy_attributes(name, min_level, max_level):
+def generate_enemy_stats(min_level, max_level):
     level = random.randrange(min_level, max_level)
     str = random.randrange(constants.ENEMY_STR_MOD[0] * level,
                            constants.ENEMY_STR_MOD[1] * level)
@@ -20,21 +20,8 @@ def generate_enemy_attributes(name, min_level, max_level):
                                constants.ENEMY_DEFENSE_MOD[1] * level)
     exp = random.randrange(constants.ENEMY_XP_MOD[0] * level,
                            constants.ENEMY_XP_MOD[1] * level)
-    gold = random.randrange(constants.ENEMY_GOLD_MOD[0] * level,
-                            constants.ENEMY_GOLD_MOD[1] * level)
-
-    return {
-        "name": name,
-        "str": str,
-        "agi": agi,
-        "int": int,
-        "hp": max_hp,
-        "defense": defense,
-        "max_hp": max_hp,
-        "level": level,
-        "exp": exp,
-        "gold": gold
-    }
+    # TODO: Generate loot/gold
+    return ActorStats(str, agi, int, max_hp, defense, max_hp, level, exp, 0)
 
 
 class Enemy(Actor):
@@ -51,11 +38,9 @@ class Enemy(Actor):
                  level=None,
                  exp=None,
                  inventory=None):
-        if stats is not None:
-            self.stats = stats
-        else:
+        if stats is None:
             stats = ActorStats(str, agi, int, hp, defense, max_hp, level, exp,
-                               0)  # Enemies cannot level
+                               0)
             super().__init__(name, stats, inventory)
 
     def update(self, name, stats, inventory):
@@ -70,10 +55,9 @@ class GiantRat(Enemy):
     max_level = 2
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class GiantSpider(Enemy):
@@ -82,10 +66,9 @@ class GiantSpider(Enemy):
     max_level = 2
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Bat(Enemy):
@@ -94,10 +77,9 @@ class Bat(Enemy):
     max_level = 2
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Crocodile(Enemy):
@@ -106,10 +88,9 @@ class Crocodile(Enemy):
     max_level = 4
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Wolf(Enemy):
@@ -118,10 +99,9 @@ class Wolf(Enemy):
     max_level = 4
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Poodle(Enemy):
@@ -130,10 +110,9 @@ class Poodle(Enemy):
     max_level = 5
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Snake(Enemy):
@@ -142,10 +121,9 @@ class Snake(Enemy):
     max_level = 5
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Lion(Enemy):
@@ -154,10 +132,9 @@ class Lion(Enemy):
     max_level = 6
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)
 
 
 class Dragon(Enemy):
@@ -166,7 +143,6 @@ class Dragon(Enemy):
     max_level = 7
 
     def __init__(self):
-        attributes = generate_enemy_attributes(name=self.name,
-                                               min_level=self.min_level,
-                                               max_level=self.max_level)
-        super().__init__(**attributes)
+        stats = generate_enemy_stats(min_level=self.min_level,
+                                     max_level=self.max_level)
+        super().__init__(name=self.name, stats=stats, inventory=None)

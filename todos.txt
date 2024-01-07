@@ -1,5 +1,7 @@
 Fix Commands to work with new stats system
 
+Move all utility functions to a new module
+
 Items class (introduce rarities later)
 
 Equipment class
